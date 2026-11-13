@@ -1,0 +1,45 @@
+{
+  "solution": "examples/integral_graph_solution.py",
+  "dependencies": [
+    "scenes/integral_graph/common.py"
+  ],
+  "segments": [
+    {
+      "id": "integrate",
+      "scene": "scenes/integral_graph/integrate.py",
+      "class": "Integrate"
+    },
+    {
+      "id": "critical",
+      "scene": "scenes/integral_graph/critical.py",
+      "class": "Critical"
+    },
+    {
+      "id": "extrema",
+      "scene": "scenes/integral_graph/extrema.py",
+      "class": "Extrema"
+    },
+    {
+      "id": "points",
+      "scene": "scenes/integral_graph/points.py",
+      "class": "Points"
+    },
+    {
+      "id": "features",
+      "scene": "scenes/integral_graph/features.py",
+      "class": "Features"
+    },
+    {
+      "id": "overview",
+      "scene": "scenes/integral_graph/overview.py",
+      "class": "Overview"
+    }
+  ],
+  "preview_segments": [
+    {
+      "id": "sample",
+      "scene": "scenes/integral_graph/overview.py",
+      "class": "IntegralGraphSample"
+    }
+  ]
+}

@@ -1,90 +1,147 @@
 name: Render mathematics
 on:
   push:
-    paths: ['scenes/**', 'examples/**', 'src/**', 'tests/**', 'pyproject.toml', 'requirements.lock', 'Dockerfile', '.github/workflows/render.yml']
+    paths: ['scenes/**', 'examples/**', 'src/**', 'tests/**', 'pyproject.toml', 'requirements.lock', 'Dockerfile', '.github/workflows/render.yml', '.github/workflows/runtime.yml', '.github/scripts/**']
   workflow_dispatch:
     inputs:
       job:
-        description: 'Job manifest name, or all'
-        default: 'all'
+        description: 'One job name; all explicitly requests the regression set'
+        default: 'integral_graph'
         required: true
         type: string
       mode:
-        description: 'Video quality'
-        default: 'preview'
+        default: 'final'
         type: choice
         options: ['preview', 'final']
+      smoke:
+        description: 'Short visual sample (preview profile only)'
+        type: boolean
+        default: false
 permissions:
   contents: read
+  packages: read
 concurrency:
-  group: render-${{ github.ref }}-${{ github.event.inputs.job || 'all' }}
+  group: render-${{ github.ref }}-${{ inputs.job || 'changed' }}-${{ inputs.mode || 'preview' }}
   cancel-in-progress: true
 jobs:
   plan:
     runs-on: ubuntu-24.04
     outputs:
-      jobs: ${{ steps.matrix.outputs.jobs }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      jobs: ${{ steps.plan.outputs.jobs }}
+      count: ${{ steps.plan.outputs.count }}
+      smoke: ${{ steps.plan.outputs.smoke }}
+      mode: ${{ steps.plan.outputs.mode }}
     steps:
       - uses: actions/checkout@v4
-      - id: matrix
+        with:
+          fetch-depth: 0
+      - id: plan
         env:
-          REQUESTED_JOB: ${{ inputs.job || 'all' }}
-        run: |
-          python3 - <<'PY'
-          import json, os, re
-          from pathlib import Path
-          requested = os.environ['REQUESTED_JOB']
-          jobs = sorted(p.stem for p in Path('examples').glob('*.json'))
-          assert jobs and all(re.fullmatch(r'[a-z][a-z0-9_]{0,63}', j) for j in jobs)
-          assert requested == 'all' or requested in jobs, 'Unknown job'
-          selected = jobs if requested == 'all' else [requested]
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write('jobs=' + json.dumps(selected) + '\n')
-          PY
-  render:
+          PYTHONPATH: src
+          REQUESTED_JOB: ${{ inputs.job || 'changed' }}
+          MODE: ${{ inputs.mode || 'preview' }}
+          SMOKE: ${{ github.event_name == 'push' || inputs.smoke }}
+          BEFORE: ${{ github.event.before }}
+        run: python .github/scripts/plan.py
+  runtime:
     needs: plan
+    if: needs.plan.outputs.count != '0'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/runtime.yml
+  checks:
+    needs: [plan, runtime]
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check once for the whole run
+        env:
+          IMAGE: ${{ needs.runtime.outputs.image }}
+        run: docker run --rm --network none -v "$PWD:/app:ro" --entrypoint python "$IMAGE" -m pytest -q -p no:cacheprovider
+  segment:
+    needs: [plan, runtime, checks]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
     strategy:
       fail-fast: false
-      max-parallel: 5
+      max-parallel: 8
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      JOB: ${{ matrix.job }}
+      SEGMENT: ${{ matrix.segment }}
+      MODE: ${{ matrix.mode }}
+      SMOKE: ${{ matrix.smoke }}
+      IMAGE: ${{ needs.runtime.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/cache@v4
+        with:
+          path: .cache/math-animator
+          key: render-${{ runner.os }}-${{ matrix.runtime }}-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}-${{ matrix.smoke }}-${{ matrix.key }}
+          restore-keys: |
+            render-${{ runner.os }}-${{ matrix.runtime }}-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}-${{ matrix.smoke }}-
+      - name: Render independent segment or reuse verified content
+        run: |
+          mkdir -p outputs .cache/math-animator
+          chmod -R a+rwX outputs .cache/math-animator
+          FLAGS=()
+          if [ "$SMOKE" = true ]; then FLAGS+=(--smoke); fi
+          docker run --rm --network none -v "$PWD:/app:ro" -v "$PWD/outputs:/app/outputs" -v "$PWD/.cache/math-animator:/app/.cache/math-animator" "$IMAGE" "$JOB" --mode "$MODE" --segment "$SEGMENT" "${FLAGS[@]}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: segment-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}
+          path: outputs
+          retention-days: 7
+          compression-level: 0
+  assemble:
+    needs: [plan, runtime, segment]
+    runs-on: ubuntu-24.04
+    strategy:
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.jobs) }}
     env:
       JOB: ${{ matrix.job }}
-      MODE: ${{ inputs.mode || 'preview' }}
+      MODE: ${{ needs.plan.outputs.mode }}
+      SMOKE: ${{ needs.plan.outputs.smoke }}
+      IMAGE: ${{ needs.runtime.outputs.image }}
     steps:
       - uses: actions/checkout@v4
-      - name: Build reproducible renderer
-        run: |
-          mkdir -p outputs
-          set -o pipefail
-          docker build -t math-animator . 2>&1 | tee outputs/build.log
-      - name: Mathematical and regression checks
-        run: |
-          set -o pipefail
-          docker run --rm --entrypoint python math-animator -m pytest -q -p no:cacheprovider 2>&1 | tee outputs/tests.log
-      - name: Render and fully decode MP4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: segment-${{ matrix.job }}-*
+          path: downloaded
+          merge-multiple: true
+      - name: Join in order without reencoding and fully decode MP4
         run: |
           mkdir -p outputs
           chmod 777 outputs
-          set -o pipefail
-          docker run --rm --network none -v "$PWD/outputs:/app/outputs" math-animator "$JOB" --mode "$MODE" 2>&1 | tee outputs/runner.log
-      - name: Save video and diagnostic reports
+          FLAGS=()
+          if [ "$SMOKE" = true ]; then FLAGS+=(--smoke); fi
+          docker run --rm --network none -v "$PWD:/app:ro" -v "$PWD/outputs:/app/outputs" "$IMAGE" "$JOB" --mode "$MODE" --assemble-from /app/downloaded "${FLAGS[@]}"
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
-          name: math-${{ matrix.job }}-${{ env.MODE }}
-          path: |
-            outputs/*/*/*.mp4
-            outputs/**/*.json
-            outputs/**/*.log
-          if-no-files-found: warn
+          name: math-${{ matrix.job }}-${{ env.MODE }}${{ env.SMOKE == 'true' && '-smoke' || '' }}
+          path: outputs
           retention-days: 30
-      - name: Status and download instructions
-        if: always()
-        env:
-          JOB_STATUS: ${{ job.status }}
-        run: |
-          echo "### $JOB — $MODE" >> "$GITHUB_STEP_SUMMARY"
-          echo "Status: $JOB_STATUS. See Artifacts for available MP4, reports and diagnostic logs." >> "$GITHUB_STEP_SUMMARY"
+          compression-level: 0
+      - name: Download link and timing
+        run: echo 'Video, checked solution, cache hits and per-segment timings are in Artifacts/report.json.' >> "$GITHUB_STEP_SUMMARY"

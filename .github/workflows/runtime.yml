@@ -1,0 +1,54 @@
+name: Prepared Manim environment
+on:
+  workflow_call:
+    outputs:
+      image:
+        value: ${{ jobs.environment.outputs.image }}
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: prepared-manim-environment
+  cancel-in-progress: false
+jobs:
+  environment:
+    runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: image
+        env:
+          PYTHONPATH: src
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          KEY=$(python -c 'from rendering.planner import runtime_key; print(runtime_key())')
+          echo "image=ghcr.io/${REPOSITORY,,}/renderer:env-$KEY" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: inspect
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+        run: |
+          if docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/setup-buildx-action@v3
+        if: steps.inspect.outputs.exists != 'true'
+      - uses: docker/build-push-action@v6
+        if: steps.inspect.outputs.exists != 'true'
+        with:
+          context: .
+          target: runtime
+          push: true
+          tags: ${{ steps.image.outputs.image }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=manim-runtime
+          cache-to: type=gha,mode=max,scope=manim-runtime
+      - run: echo 'The dependency image is reused until Dockerfile or requirements.lock changes.' >> "$GITHUB_STEP_SUMMARY"

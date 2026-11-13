@@ -1,5 +1,8 @@
 {
   "scene": "scenes/demonstrations.py",
   "class": "MatrixProduct",
-  "solution": "examples/matrix_solution.py"
+  "solution": "examples/matrix_solution.py",
+  "dependencies": [
+    "examples/solutions.py"
+  ]
 }

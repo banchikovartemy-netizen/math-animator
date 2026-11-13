@@ -1,5 +1,8 @@
 {
   "scene": "scenes/demonstrations.py",
   "class": "Integration",
-  "solution": "examples/integration_solution.py"
+  "solution": "examples/integration_solution.py",
+  "dependencies": [
+    "examples/solutions.py"
+  ]
 }

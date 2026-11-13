@@ -1,1 +1,68 @@
-{"scene": "scenes/matrix5.py", "class": "DetailedMatrix5", "solution": "examples/matrix5_solution.py"}
+{
+  "solution": "examples/matrix5_solution.py",
+  "segments": [
+    {
+      "id": "intro",
+      "scene": "scenes/matrix5_parts/intro.py",
+      "class": "Intro",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "row1",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "Row1",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "row2",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "Row2",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "row3",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "Row3",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "row4",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "Row4",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "row5",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "Row5",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    },
+    {
+      "id": "outro",
+      "scene": "scenes/matrix5_parts/outro.py",
+      "class": "Outro"
+    }
+  ],
+  "preview_segments": [
+    {
+      "id": "sample",
+      "scene": "scenes/matrix5_parts/rows.py",
+      "class": "MatrixSample",
+      "dependencies": [
+        "scenes/matrix5.py"
+      ]
+    }
+  ]
+}

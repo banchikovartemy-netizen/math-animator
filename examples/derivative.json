@@ -1,5 +1,8 @@
 {
   "scene": "scenes/demonstrations.py",
   "class": "Derivative",
-  "solution": "examples/derivative_solution.py"
+  "solution": "examples/derivative_solution.py",
+  "dependencies": [
+    "examples/solutions.py"
+  ]
 }
