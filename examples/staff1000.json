@@ -1,0 +1,5 @@
+{
+  "solution": "examples/staff1000_solution.py",
+  "segments": [{"id": "allocation", "scene": "scenes/staff1000.py", "class": "StaffAllocation"}],
+  "preview_segments": [{"id": "sample", "scene": "scenes/staff1000.py", "class": "StaffSample"}]
+}
