@@ -13,6 +13,10 @@ on:
         default: 'final'
         type: choice
         options: ['preview', 'final']
+      fresh:
+        description: 'Benchmark a new render with prepared environment but no video/assets cache'
+        type: boolean
+        default: false
       smoke:
         description: 'Short visual sample (preview profile only)'
         type: boolean
@@ -88,6 +92,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/cache@v4
+        if: inputs.fresh != true
         with:
           path: .cache/math-animator
           key: render-${{ runner.os }}-${{ matrix.runtime }}-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}-${{ matrix.smoke }}-${{ matrix.key }}
