@@ -1,0 +1,60 @@
+name: Revalidate rendered artifact
+on:
+  workflow_dispatch:
+    inputs:
+      source_run:
+        description: 'Run ID containing an already rendered MP4'
+        required: true
+        type: string
+      job:
+        description: 'Job manifest name'
+        required: true
+        type: string
+      mode:
+        description: 'Existing video profile'
+        required: true
+        type: choice
+        options: ['preview', 'final']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install verification tools
+        run: |
+          pip install sympy==1.13.3 pytest==8.3.5
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update && sudo apt-get install -y ffmpeg; fi
+      - name: Verification regression tests
+        env:
+          PYTHONPATH: src:.
+        run: python -m pytest -q -p no:cacheprovider tests/test_math.py tests/test_matrix5.py tests/test_rendering.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: math-${{ inputs.job }}-${{ inputs.mode }}
+          path: restored
+          run-id: ${{ inputs.source_run }}
+          github-token: ${{ github.token }}
+      - name: Recheck mathematics and fully decode existing MP4
+        env:
+          PYTHONPATH: src:.
+          JOB: ${{ inputs.job }}
+          MODE: ${{ inputs.mode }}
+        run: |
+          set -o pipefail
+          python -m validation.artifact "$JOB" --mode "$MODE" --directory restored 2>&1 | tee restored/revalidation.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: math-${{ inputs.job }}-${{ inputs.mode }}-verified
+          path: |
+            restored/**/*.mp4
+            restored/**/*.json
+            restored/**/*.log
+          retention-days: 30
