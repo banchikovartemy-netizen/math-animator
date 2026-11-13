@@ -3,7 +3,7 @@ from pathlib import Path
 from manim import *
 import numpy as np
 
-BACKGROUND = "#101827"
+BACKGROUND = "#000000"
 ACCENT = "#64D8CB"
 
 class ExplainedScene(Scene):
