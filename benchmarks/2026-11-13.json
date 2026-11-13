@@ -1,0 +1,177 @@
+{
+  "job": "integral_graph",
+  "local_cached_seconds": 7.328230931,
+  "runs": [
+    {
+      "case": "cold",
+      "run_id": 43467125012,
+      "url": "https://github.com/banchikovartemy-netizen/math-animator/actions/runs/43467125012",
+      "total_seconds": 514.0,
+      "runtime_job_seconds": 280.0,
+      "checks_job_seconds": 41.0,
+      "cache_hits": 0,
+      "segments": [
+        {
+          "segment": "integrate",
+          "seconds": 21.183087036999993,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "critical",
+          "seconds": 14.290444736000012,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "extrema",
+          "seconds": 18.938914003,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "points",
+          "seconds": 18.954608614999998,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "features",
+          "seconds": 17.91217557200001,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "overview",
+          "seconds": 13.609844457999998,
+          "cache_hit": false,
+          "cache_source": null
+        }
+      ],
+      "video": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "average_fps": 30.0,
+        "codec": "h264",
+        "duration": 117.2,
+        "decoded": true
+      },
+      "status": "success"
+    },
+    {
+      "case": "fresh",
+      "run_id": 43468907892,
+      "url": "https://github.com/banchikovartemy-netizen/math-animator/actions/runs/43468907892",
+      "total_seconds": 194.0,
+      "runtime_job_seconds": 12.0,
+      "checks_job_seconds": 52.0,
+      "cache_hits": 0,
+      "segments": [
+        {
+          "segment": "integrate",
+          "seconds": 14.964618154999997,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "critical",
+          "seconds": 14.228911577000005,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "extrema",
+          "seconds": 14.874705411000008,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "points",
+          "seconds": 21.451729350000008,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "features",
+          "seconds": 12.424191915999998,
+          "cache_hit": false,
+          "cache_source": null
+        },
+        {
+          "segment": "overview",
+          "seconds": 16.332730665999996,
+          "cache_hit": false,
+          "cache_source": null
+        }
+      ],
+      "video": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "average_fps": 30.0,
+        "codec": "h264",
+        "duration": 117.2,
+        "decoded": true
+      },
+      "status": "success"
+    },
+    {
+      "case": "cached",
+      "run_id": 43469517527,
+      "url": "https://github.com/banchikovartemy-netizen/math-animator/actions/runs/43469517527",
+      "total_seconds": 146.0,
+      "runtime_job_seconds": 14.0,
+      "checks_job_seconds": 53.0,
+      "cache_hits": 6,
+      "segments": [
+        {
+          "segment": "integrate",
+          "seconds": 0.0023800740000012865,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        },
+        {
+          "segment": "critical",
+          "seconds": 0.002647399000000661,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        },
+        {
+          "segment": "extrema",
+          "seconds": 0.0024059670000013966,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        },
+        {
+          "segment": "points",
+          "seconds": 0.0024819960000002084,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        },
+        {
+          "segment": "features",
+          "seconds": 0.0018417090000042435,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        },
+        {
+          "segment": "overview",
+          "seconds": 0.0028160110000001737,
+          "cache_hit": true,
+          "cache_source": "actions-without-container"
+        }
+      ],
+      "video": {
+        "width": 1920,
+        "height": 1080,
+        "fps": 30,
+        "average_fps": 30.0,
+        "codec": "h264",
+        "duration": 117.2,
+        "decoded": true
+      },
+      "status": "success"
+    }
+  ]
+}
