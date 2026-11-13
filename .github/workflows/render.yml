@@ -66,6 +66,7 @@ jobs:
           IMAGE: ${{ needs.runtime.outputs.image }}
         run: docker run --rm --network none -v "$PWD:/app:ro" --entrypoint python "$IMAGE" -m pytest -q -p no:cacheprovider
   segment:
+    name: ${{ matrix.job }} / ${{ matrix.segment }}
     needs: [plan, runtime, checks]
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -107,6 +108,7 @@ jobs:
           retention-days: 7
           compression-level: 0
   assemble:
+    name: ${{ matrix.job }} / assemble
     needs: [plan, runtime, segment]
     runs-on: ubuntu-24.04
     strategy:
@@ -136,6 +138,13 @@ jobs:
           FLAGS=()
           if [ "$SMOKE" = true ]; then FLAGS+=(--smoke); fi
           docker run --rm --network none -v "$PWD:/app:ro" -v "$PWD/outputs:/app/outputs" "$IMAGE" "$JOB" --mode "$MODE" --assemble-from /app/downloaded "${FLAGS[@]}"
+      - name: Export optional mathematical figure
+        run: |
+          if [ -f "examples/${JOB}_plot.py" ]; then
+            STAGE="$MODE"
+            if [ "$SMOKE" = true ]; then STAGE=smoke; fi
+            docker run --rm --network none -v "$PWD:/app:ro" -v "$PWD/outputs:/app/outputs" --entrypoint python "$IMAGE" -m "examples.${JOB}_plot" --output "/app/outputs/$JOB/$STAGE/graph.png"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
