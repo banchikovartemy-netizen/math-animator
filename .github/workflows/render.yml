@@ -1,0 +1,83 @@
+name: Render mathematics
+on:
+  push:
+    paths: ['scenes/**', 'examples/**', 'src/**', 'tests/**', 'pyproject.toml', 'requirements.lock', 'Dockerfile', '.github/workflows/render.yml']
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job manifest name, or all'
+        default: 'all'
+        required: true
+        type: string
+      mode:
+        description: 'Video quality'
+        default: 'preview'
+        type: choice
+        options: ['preview', 'final']
+permissions:
+  contents: read
+concurrency:
+  group: render-${{ github.ref }}-${{ github.event.inputs.job || 'all' }}
+  cancel-in-progress: true
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      jobs: ${{ steps.matrix.outputs.jobs }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        env:
+          REQUESTED_JOB: ${{ inputs.job || 'all' }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          requested = os.environ['REQUESTED_JOB']
+          jobs = sorted(p.stem for p in Path('examples').glob('*.json'))
+          assert jobs and all(re.fullmatch(r'[a-z][a-z0-9_]{0,63}', j) for j in jobs)
+          assert requested == 'all' or requested in jobs, 'Unknown job'
+          selected = jobs if requested == 'all' else [requested]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('jobs=' + json.dumps(selected) + '\n')
+          PY
+  render:
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        job: ${{ fromJSON(needs.plan.outputs.jobs) }}
+    env:
+      JOB: ${{ matrix.job }}
+      MODE: ${{ inputs.mode || 'preview' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build reproducible renderer
+        run: docker build -t math-animator .
+      - name: Mathematical and regression checks
+        run: docker run --rm --entrypoint python math-animator -m pytest -q
+      - name: Render and fully decode MP4
+        run: |
+          mkdir -p outputs
+          chmod 777 outputs
+          set -o pipefail
+          docker run --rm --network none -v "$PWD/outputs:/app/outputs" math-animator "$JOB" --mode "$MODE" 2>&1 | tee outputs/runner.log
+      - name: Save video and diagnostic reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: math-${{ matrix.job }}-${{ env.MODE }}
+          path: |
+            outputs/**/*.mp4
+            outputs/**/*.json
+            outputs/**/*.log
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Status and download instructions
+        if: always()
+        run: |
+          echo "### $JOB — $MODE" >> "$GITHUB_STEP_SUMMARY"
+          echo 'Download MP4 in Artifacts on this workflow run. Mathematical status is in solution.json; technical status is in report.json.' >> "$GITHUB_STEP_SUMMARY"

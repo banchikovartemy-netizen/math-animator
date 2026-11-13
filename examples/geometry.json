@@ -1,0 +1,5 @@
+{
+  "scene": "scenes/demonstrations.py",
+  "class": "Geometry",
+  "solution": "examples/geometry_solution.py"
+}

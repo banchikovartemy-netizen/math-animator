@@ -1,0 +1,5 @@
+{
+  "scene": "scenes/demonstrations.py",
+  "class": "GraphTraversal",
+  "solution": "examples/graph_solution.py"
+}
