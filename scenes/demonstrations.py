@@ -102,9 +102,10 @@ class GraphTraversal(ExplainedScene):
         self.heading("Поиск кратчайшего пути в невзвешенном графе")
         edges=[(1,2),(1,3),(2,4),(3,4),(4,5)]
         layout={1:LEFT*4,2:LEFT*2+UP*1.5,3:LEFT*2+DOWN*1.5,4:RIGHT*.5,5:RIGHT*3.5}
-        graph=Graph([1,2,3,4,5],edges,layout=layout,labels=True,vertex_config={"radius":.28},edge_config={"stroke_width":3})
-        self.check_frame(graph)
-        self.play(Create(graph))
+        graph=Graph([1,2,3,4,5],edges,layout=layout,labels=False,vertex_config={"radius":.28},edge_config={"stroke_width":3})
+        numbers = VGroup(*[Text(str(v), font="DejaVu Sans", font_size=24, color="#101827").move_to(graph[v]) for v in graph.vertices])
+        self.check_frame(graph, numbers)
+        self.play(Create(graph), FadeIn(numbers))
         self.explain("Обход в ширину раскрывает вершины слоями от вершины 1")
         for layer in ([1],[2,3],[4],[5]):
             self.play(*[graph[v].animate.set_color(ACCENT) for v in layer])

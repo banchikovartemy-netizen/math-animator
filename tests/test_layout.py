@@ -4,8 +4,8 @@ from animation.components import ExplainedScene
 from math_engine.checks import Check
 
 
-def test_bounds_reject_offscreen_object():
-    with tempconfig({"pixel_width": 1280, "pixel_height": 720, "frame_width": 14.222222, "frame_height": 8}):
+def test_bounds_reject_offscreen_object(tmp_path):
+    with tempconfig({"media_dir": str(tmp_path / "media"), "pixel_width": 1280, "pixel_height": 720, "frame_width": 14.222222, "frame_height": 8}):
         scene = ExplainedScene()
         scene.setup()
         scene.check_frame(Dot())
