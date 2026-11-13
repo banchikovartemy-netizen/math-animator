@@ -67,3 +67,20 @@ def test_assembly_rejects_stale_or_corrupted_parts(tmp_path,monkeypatch):
     modified['fingerprint']=fingerprint('integral_graph',segments_for('integral_graph')[0],'preview')
     modified['sha256']='invalid';metadata[0].write_text(json.dumps(modified))
     with pytest.raises(ValueError,match='content changed'):assemble('integral_graph','preview',tmp_path/'parts')
+
+
+def test_cache_hit_skips_container_but_rejects_corruption(tmp_path):
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('cache_probe',ROOT/'.github/scripts/cache_probe.py')
+    probe_module=importlib.util.module_from_spec(spec);spec.loader.exec_module(probe_module)
+    segment=segments_for('integral_graph')[0]
+    key=fingerprint('integral_graph',segment,'final')
+    cache=tmp_path/'cache';output=tmp_path/'outputs'
+    source=cache/'segments/integral_graph/final/integrate'/key;source.mkdir(parents=True)
+    video=source/'video.mp4';video.write_bytes(b'cached content')
+    meta=source/'segment.json'
+    meta.write_text(json.dumps({'status':'passed','fingerprint':key,'sha256':digest(video)}))
+    assert probe_module.probe('integral_graph','integrate','final',cache=cache,outputs=output)
+    assert (output/'integral_graph/final/segments/integrate/integrate.mp4').read_bytes()==b'cached content'
+    video.write_bytes(b'corrupt content')
+    assert not probe_module.probe('integral_graph','integrate','final',cache=cache,outputs=output)

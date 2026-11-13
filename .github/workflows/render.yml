@@ -84,6 +84,7 @@ jobs:
       MODE: ${{ matrix.mode }}
       SMOKE: ${{ matrix.smoke }}
       IMAGE: ${{ needs.runtime.outputs.image }}
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
@@ -98,7 +99,11 @@ jobs:
           key: render-${{ runner.os }}-${{ matrix.runtime }}-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}-${{ matrix.smoke }}-${{ matrix.key }}
           restore-keys: |
             render-${{ runner.os }}-${{ matrix.runtime }}-${{ matrix.job }}-${{ matrix.segment }}-${{ matrix.mode }}-${{ matrix.smoke }}-
+      - id: cached
+        name: Reuse exact segment without downloading Manim
+        run: python .github/scripts/cache_probe.py
       - name: Render independent segment or reuse verified content
+        if: steps.cached.outputs.hit != 'true'
         run: |
           mkdir -p outputs .cache/math-animator
           chmod -R a+rwX outputs .cache/math-animator
@@ -124,6 +129,7 @@ jobs:
       MODE: ${{ needs.plan.outputs.mode }}
       SMOKE: ${{ needs.plan.outputs.smoke }}
       IMAGE: ${{ needs.runtime.outputs.image }}
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
