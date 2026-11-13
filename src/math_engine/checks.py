@@ -8,6 +8,10 @@ class Check:
     status: str
     method: str
     detail: str = ""
+    def __post_init__(self):
+        if self.status not in {"passed", "failed", "unverified"}:
+            raise ValueError("Unknown mathematical check status")
+
     def as_dict(self):
         return asdict(self)
 

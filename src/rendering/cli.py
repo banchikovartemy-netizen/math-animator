@@ -34,6 +34,8 @@ def render(job, mode="preview"):
     output = ROOT / "outputs" / job / mode
     output.mkdir(parents=True, exist_ok=True)
     report = {"job": job, "mode": mode, "status": "failed"}
+    target = output / f"{job}.mp4"
+    target.unlink(missing_ok=True)
     try:
         solution = artifact_module(solution_file).build_solution()
         report["solution"] = asdict(solution)
@@ -51,7 +53,6 @@ def render(job, mode="preview"):
             subprocess.run(command, cwd=ROOT, env=env, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=1800)
         candidates = list((output / "media" / "videos").rglob(f"{job}.mp4"))
         if len(candidates) != 1: raise RuntimeError("Expected exactly one completed video")
-        target = output / f"{job}.mp4"
         shutil.copy2(candidates[0], target)
         report["video"] = validate_video(target, mode)
         report["status"] = "passed"

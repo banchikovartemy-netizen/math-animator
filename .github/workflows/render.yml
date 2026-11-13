@@ -47,7 +47,7 @@ jobs:
     timeout-minutes: 40
     strategy:
       fail-fast: false
-      max-parallel: 2
+      max-parallel: 5
       matrix:
         job: ${{ fromJSON(needs.plan.outputs.jobs) }}
     env:
@@ -56,9 +56,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build reproducible renderer
-        run: docker build -t math-animator .
+        run: |
+          mkdir -p outputs
+          set -o pipefail
+          docker build -t math-animator . 2>&1 | tee outputs/build.log
       - name: Mathematical and regression checks
-        run: docker run --rm --entrypoint python math-animator -m pytest -q
+        run: |
+          set -o pipefail
+          docker run --rm --entrypoint python math-animator -m pytest -q 2>&1 | tee outputs/tests.log
       - name: Render and fully decode MP4
         run: |
           mkdir -p outputs
@@ -71,7 +76,7 @@ jobs:
         with:
           name: math-${{ matrix.job }}-${{ env.MODE }}
           path: |
-            outputs/**/*.mp4
+            outputs/*/*/*.mp4
             outputs/**/*.json
             outputs/**/*.log
           if-no-files-found: warn
