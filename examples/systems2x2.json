@@ -1,0 +1,55 @@
+{
+  "solution": "examples/systems2x2_solution.py",
+  "dependencies": [
+    "scenes/systems2x2/common.py"
+  ],
+  "segments": [
+    {
+      "id": "substitution",
+      "scene": "scenes/systems2x2/substitution.py",
+      "class": "Substitution"
+    },
+    {
+      "id": "elimination",
+      "scene": "scenes/systems2x2/elimination.py",
+      "class": "Elimination"
+    },
+    {
+      "id": "graph",
+      "scene": "scenes/systems2x2/graph.py",
+      "class": "Graphical"
+    },
+    {
+      "id": "cramer",
+      "scene": "scenes/systems2x2/cramer.py",
+      "class": "Cramer"
+    },
+    {
+      "id": "gauss",
+      "scene": "scenes/systems2x2/gauss.py",
+      "class": "Gauss"
+    },
+    {
+      "id": "inverse",
+      "scene": "scenes/systems2x2/inverse.py",
+      "class": "Inverse"
+    },
+    {
+      "id": "cases",
+      "scene": "scenes/systems2x2/cases.py",
+      "class": "Cases"
+    },
+    {
+      "id": "summary",
+      "scene": "scenes/systems2x2/summary.py",
+      "class": "Summary"
+    }
+  ],
+  "preview_segments": [
+    {
+      "id": "sample",
+      "scene": "scenes/systems2x2/graph.py",
+      "class": "SystemsSample"
+    }
+  ]
+}
