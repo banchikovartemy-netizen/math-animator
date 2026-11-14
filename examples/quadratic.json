@@ -1,0 +1,6 @@
+{
+  "solution": "examples/quadratic_solution.py",
+  "dependencies": ["examples/quadratic_data.py"],
+  "segments": [{"id":"equation","scene":"scenes/quadratic.py","class":"QuadraticEquation"}],
+  "preview_segments": [{"id":"sample","scene":"scenes/quadratic.py","class":"QuadraticEquation","range":[0,4]}]
+}
